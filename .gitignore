@@ -1,0 +1,65 @@
+# Compilados
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.out
+*.app
+
+# Objetos de compilación
+*.o.d
+*.d
+
+# Dependencias de compilación
+/build/
+/dist/
+/cmake-build-*/
+.vscode/
+.idea/
+
+# Ejecutables de prueba
+test
+test.exe
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+.swp
+.swo
+*~
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Node (si hay projects js/angular)
+node_modules/
+.angular/
+dist/
+
+# Docker
+.dockerignore
+
+# Archivos de evaluación 42
+.DS_Store
+a.out
+*.core
+
+# Logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
