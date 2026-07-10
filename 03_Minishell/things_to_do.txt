@@ -1,0 +1,3 @@
+export += (concatena cosas)
+señal ctrl+\ se sale del shell en lugar de salirse solo del comando cuando minishell está esperando
+exit

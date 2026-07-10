@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Poker Race - Juego de Cartas</title>
+    <style>
+        * {
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0d4a1c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1280px;
+            max-height: 720px;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            pointer-events: none;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+        <div id="loading">Cargando Poker Race...</div>
+    </div>
+    
+    <script>
+        var _pendingUsername = null;
+        var _pendingLang = null;
+        var _pendingConfig = null;
+
+        // ccall is only safe AFTER the wasm runtime is initialized.
+        var _runtimeReady = false;
+
+        function _applyUsername(username) {
+            Module.ccall('set_player_name_from_json', null, ['string'],
+                [JSON.stringify({ username: username })]);
+        }
+
+        function _applyLang(lang) {
+            if (Module._set_language) {
+                Module.ccall('set_language', null, ['string'], [lang]);
+            }
+        }
+
+        function _applyConfig(config) {
+            if (Module._set_game_config) {
+                Module.ccall('set_game_config', null, ['string'],
+                    [JSON.stringify(config)]);
+            }
+        }
+
+        window.addEventListener('message', function(event) {
+            if (!event.data) return;
+            if (event.data.type === 'set-username') {
+                var username = event.data.username;
+                if (!username) return;
+                if (_runtimeReady) _applyUsername(username);
+                else _pendingUsername = username;
+            } else if (event.data.type === 'set-language') {
+                var lang = event.data.lang;
+                if (!lang) return;
+                if (_runtimeReady) _applyLang(lang);
+                else _pendingLang = lang;
+            } else if (event.data.type === 'set-config') {
+                var config = event.data.config;
+                if (!config) return;
+                if (_runtimeReady) _applyConfig(config);
+                else _pendingConfig = config;
+            }
+        });
+
+        var Module = {
+            canvas: document.getElementById('canvas'),
+            onRuntimeInitialized: function() {
+                _runtimeReady = true;
+                document.getElementById('loading').classList.add('hidden');
+                if (_pendingUsername) {
+                    _applyUsername(_pendingUsername);
+                    _pendingUsername = null;
+                }
+                if (_pendingLang) {
+                    _applyLang(_pendingLang);
+                    _pendingLang = null;
+                }
+                if (_pendingConfig) {
+                    _applyConfig(_pendingConfig);
+                    _pendingConfig = null;
+                }
+            }
+        };
+    </script>
+    {{{ SCRIPT }}}
+</body>
+</html>

@@ -1,0 +1,29 @@
+# Build stage for Angular
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build Angular app
+RUN npm run build -- --configuration production
+
+# Final stage - serve with Nginx
+FROM nginx:alpine
+
+# Copy build output to Nginx (@angular/build:application emits dist/<project>/browser)
+COPY --from=builder /app/dist/front/browser /usr/share/nginx/html
+
+# nginx-app.conf is mounted at runtime via docker-compose, keeping it out of
+# the ./front build context (which cannot reach ../docker).
+
+EXPOSE 4200
+
+CMD ["nginx", "-g", "daemon off;"]

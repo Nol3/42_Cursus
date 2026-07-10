@@ -1,0 +1,151 @@
+<div class="lobby animate-fade-in">
+
+  <!-- ── Page header ──────────────────────────────────────── -->
+  <div class="lobby__header container">
+    <div class="lobby__title-row">
+      <app-pixel-title [level]="2" color="yellow">{{ 'lobby.title' | translate }}</app-pixel-title>
+      @switch (onlineStatus()) {
+        @case ('matched') {
+          <app-badge variant="success">Matched</app-badge>
+        }
+        @case ('searching') {
+          <app-badge variant="warning">Searching…</app-badge>
+        }
+        @default {
+          <app-badge variant="success">{{ 'lobby.online' | translate }}</app-badge>
+        }
+      }
+    </div>
+    <p class="text-secondary text-sm">
+      {{ 'lobby.subtitle' | translate }}
+    </p>
+  </div>
+
+  <div class="lobby__body container">
+    <div class="lobby__grid">
+
+      <!-- ── Left: sidebar ───────────────────────────────– -->
+      <div class="lobby__sidebar">
+
+        <!-- Game rules -->
+        <app-card [title]="'lobby.rulesTitle' | translate">
+          <ul class="rules">
+            @for (rule of rules; track rule) {
+              <li class="rules__item">
+                <span class="neon-text-cyan font-mono">›</span>
+                <span class="text-secondary text-sm">{{ rule | translate }}</span>
+              </li>
+            }
+          </ul>
+        </app-card>
+
+        <!-- Your stats -->
+        <app-card [title]="'lobby.statsTitle' | translate">
+          <div class="my-stats">
+            @for (stat of stats(); track stat.label) {
+              <div class="my-stats__row">
+                <span class="text-muted font-mono text-sm">{{ stat.label | translate }}</span>
+                <span [class]="'font-pixel ' + stat.color">{{ stat.value }}</span>
+              </div>
+            }
+          </div>
+        </app-card>
+
+        <!-- Game customization (Minor module) -->
+        <app-card [title]="'lobby.customizeTitle' | translate">
+          <div class="game-config">
+            <!-- Local players (2–4 humans, hotseat) -->
+            <div class="game-config__row">
+              <span class="text-muted font-mono text-sm">{{ 'lobby.players' | translate }}</span>
+              <div class="game-config__stepper">
+                <button type="button" class="game-config__btn"
+                        (click)="setPlayers(players() - 1)" [disabled]="players() <= 2">−</button>
+                <span class="font-pixel neon-text-cyan">{{ players() }}</span>
+                <button type="button" class="game-config__btn"
+                        (click)="setPlayers(players() + 1)" [disabled]="players() >= 4">+</button>
+              </div>
+            </div>
+
+            <!-- Target score -->
+            <div class="game-config__row">
+              <span class="text-muted font-mono text-sm">{{ 'lobby.targetScore' | translate }}</span>
+              <div class="game-config__stepper">
+                <button type="button" class="game-config__btn"
+                        (click)="setTargetScore(targetScore() - 50)" [disabled]="targetScore() <= 100">−</button>
+                <span class="font-pixel neon-text-green">{{ targetScore() }}</span>
+                <button type="button" class="game-config__btn"
+                        (click)="setTargetScore(targetScore() + 50)" [disabled]="targetScore() >= 1000">+</button>
+              </div>
+            </div>
+
+            <!-- Rounds -->
+            <div class="game-config__row">
+              <span class="text-muted font-mono text-sm">{{ 'lobby.rounds' | translate }}</span>
+              <div class="game-config__stepper">
+                <button type="button" class="game-config__btn"
+                        (click)="setRounds(rounds() - 1)" [disabled]="rounds() <= 1">−</button>
+                <span class="font-pixel neon-text-yellow">{{ rounds() }}</span>
+                <button type="button" class="game-config__btn"
+                        (click)="setRounds(rounds() + 1)" [disabled]="rounds() >= 10">+</button>
+              </div>
+            </div>
+
+            <!-- Table theme -->
+            <div class="game-config__row game-config__row--themes">
+              <span class="text-muted font-mono text-sm">{{ 'lobby.theme' | translate }}</span>
+              <div class="game-config__themes">
+                @for (t of themes; track t) {
+                  <button type="button"
+                          class="game-config__theme game-config__theme--{{ t }}"
+                          [class.is-active]="theme() === t"
+                          (click)="setTheme(t)"
+                          [attr.aria-label]="t"></button>
+                }
+              </div>
+            </div>
+          </div>
+        </app-card>
+
+      </div>
+
+      <!-- ── Right: game area ──────────────────────────────── -->
+      <div class="game-area">
+
+        <!-- Arcade cabinet frame -->
+        <div class="cabinet">
+          <div class="cabinet__top">
+            <span class="font-pixel neon-text-yellow cabinet__label">{{ 'lobby.cardBattle' | translate }}</span>
+            <div class="cabinet__lights" aria-hidden="true">
+              <span class="cabinet__light cabinet__light--cyan  animate-pulse-glow"></span>
+              <span class="cabinet__light cabinet__light--magenta animate-pulse-glow"></span>
+              <span class="cabinet__light cabinet__light--yellow animate-pulse-glow"></span>
+            </div>
+          </div>
+
+          <div class="cabinet__screen">
+            <iframe
+              #gameFrame
+              [src]="gameSrc"
+              title="Card Wars - WASM Game"
+              class="cabinet__game-frame"
+              loading="lazy"
+              allow="fullscreen"
+              (load)="onGameFrameLoad()"
+            ></iframe>
+          </div>
+
+          <div class="cabinet__bottom">
+            <div class="cabinet__controls" aria-hidden="true">
+              <span class="cabinet__btn cabinet__btn--red"></span>
+              <span class="cabinet__btn cabinet__btn--blue"></span>
+              <span class="cabinet__btn cabinet__btn--yellow"></span>
+              <span class="cabinet__btn cabinet__btn--green"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>

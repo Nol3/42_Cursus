@@ -1,0 +1,63 @@
+Aquí tienes la lista completa de preguntas para la entrevista, organizada por secciones del CV:
+
+Preguntas para la entrevista entre compañeros
+Datos personales y perfil
+
+¿Cuál es tu nombre completo y en qué ciudad vives actualmente?
+¿Tienes LinkedIn o GitHub? ¿Cuál es la URL?
+¿Cómo te definirías profesionalmente en 2-3 frases?
+¿A qué tipo de puesto o proyecto te gustaría orientarte?
+
+
+Formación académica
+
+¿Qué estudios tienes? ¿Dónde y cuándo los cursaste?
+¿Has hecho algún bootcamp, curso online o certificación relevante?
+¿Hay alguna asignatura o área de tu formación que destaque especialmente?
+
+
+Experiencia laboral
+
+¿Qué trabajos has tenido? ¿En qué consistían?
+¿En cuáles usaste tecnología o programación?
+¿Cuál fue tu mayor responsabilidad en cada puesto?
+¿Trabajaste en equipo o de forma autónoma?
+¿Tienes experiencia freelance o como autónomo?
+
+
+Habilidades técnicas
+
+¿Qué lenguajes de programación conoces y cuál es tu nivel en cada uno?
+¿Has trabajado con HTML, CSS, JavaScript? ¿Y con frameworks como Vue.js o React?
+¿Tienes experiencia con PHP o Python para backend?
+¿Usas Git habitualmente? ¿Tienes repositorios en GitHub?
+¿Qué herramientas usas en tu día a día (editores, gestores de tareas, etc.)?
+
+
+Proyectos
+
+¿Has desarrollado algún proyecto personal o académico del que estés orgulloso?
+¿De qué trataba? ¿Qué tecnologías usaste?
+¿Está disponible online o en GitHub?
+¿Lo hiciste solo o en equipo? ¿Cuál fue tu rol?
+
+
+Idiomas
+
+¿Qué idiomas hablas? ¿Cuál es tu nivel en cada uno?
+¿Tienes algún certificado oficial?
+
+
+Soft skills y perfil personal
+
+¿Cómo describes tu capacidad para trabajar de forma autónoma?
+¿Cómo gestionas los plazos y la organización de tu trabajo?
+¿Tienes facilidad para comunicarte por escrito? ¿Has hecho seguimiento de proyectos por email o chat?
+¿Cómo reaccionas cuando te atascas en un problema técnico?
+¿Qué es lo que más te motiva de trabajar en desarrollo web?
+
+
+Cierre
+
+¿Hay algo que quieras añadir que no hayamos cubierto?
+¿Hay alguna información que prefieras que no aparezca en el CV por privacidad?

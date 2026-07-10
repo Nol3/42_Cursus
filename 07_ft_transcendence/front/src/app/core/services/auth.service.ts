@@ -1,0 +1,293 @@
+import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
+import { Router } from '@angular/router';
+import { tap, map, of, catchError } from 'rxjs';
+import { ApiService } from './api.service';
+import { User, AuthTokens } from '../models/user.model';
+import { environment } from '../../../environments/environment';
+
+// Ambient declaration for Google Identity Services loaded via <script> tag
+declare const google: {
+  accounts: {
+    id: {
+      initialize(config: {
+        client_id: string;
+        callback: (response: { credential: string }) => void;
+        auto_select?: boolean;
+        cancel_on_tap_outside?: boolean;
+      }): void;
+      prompt(momentListener?: (notification: unknown) => void): void;
+      renderButton(element: HTMLElement, options: Record<string, unknown>): void;
+      disableAutoSelect(): void;
+    };
+  };
+};
+
+const ACCESS_TOKEN_KEY = 'access_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
+const CACHED_USER_KEY = 'current_user';
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
+
+  private readonly _user = signal<User | null>(null);
+  private readonly _loading = signal(false);
+  private _gsiInitialized = false;
+
+  readonly user = this._user.asReadonly();
+  readonly loading = this._loading.asReadonly();
+  readonly isAuthenticated = computed(() => this._user() !== null);
+
+  constructor() {
+    this.initAuth();
+  }
+
+  private initAuth(): void {
+    const token = this.getToken();
+    const cachedUser = this.getCachedUser();
+
+    // Restaurar usuario desde caché si tenemos token
+    if (token && cachedUser) {
+      this._user.set(cachedUser);
+    }
+
+    // Validar con el servidor en background
+    if (token) {
+      this.fetchCurrentUser().subscribe({
+        next: (user) => {
+          // Usuario validado en servidor
+          if (user) {
+            this.setCachedUser(user);
+          }
+        },
+        error: () => {
+          // Si falla la validación pero tenemos usuario en caché, mantener sesión
+          if (!cachedUser) {
+            this.clearTokens();
+          }
+        },
+      });
+    }
+  }
+
+  login(email: string, password: string) {
+    this._loading.set(true);
+    return this.api
+      .post<{ user: User; tokens: AuthTokens }>('/auth/login', { email, password })
+      .pipe(
+        tap({
+          next: (res) => {
+            if (res.data) {
+              this._user.set(res.data.user);
+              this.setTokens(res.data.tokens);
+              this.setCachedUser(res.data.user);
+            }
+            this._loading.set(false);
+          },
+          error: () => {
+            this._loading.set(false);
+          },
+        }),
+        map((res) => res.data),
+      );
+  }
+
+  register(username: string, email: string, password: string) {
+    this._loading.set(true);
+    return this.api
+      .post<{ user: User; tokens: AuthTokens }>('/auth/register', { username, email, password })
+      .pipe(
+        tap({
+          next: (res) => {
+            if (res.data) {
+              this._user.set(res.data.user);
+              this.setTokens(res.data.tokens);
+              this.setCachedUser(res.data.user);
+            }
+            this._loading.set(false);
+          },
+          error: () => {
+            this._loading.set(false);
+          },
+        }),
+        map((res) => res.data),
+      );
+  }
+
+  logout(): void {
+    // Prevenir logout múltiple
+    if (!this._user()) return;
+    
+    this._user.set(null);
+    this.clearTokens();
+    this.router.navigate(['/login']).catch(() => {});
+    
+    // No enviar logout al backend en bucle
+    // this.api.post('/auth/logout', {}).subscribe({
+    //   complete: () => {
+    //     this._user.set(null);
+    //     this.clearTokens();
+    //     this.router.navigate(['/login']);
+    //   },
+    //   error: () => {
+    //     this._user.set(null);
+    //     this.clearTokens();
+    //     this.router.navigate(['/login']);
+    //   },
+    // });
+  }
+
+  refreshToken() {
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    if (!refreshToken) {
+      return of(null);
+    }
+
+    return this.api.post<{ tokens: AuthTokens }>('/auth/refresh', { refreshToken }).pipe(
+      tap((res) => {
+        if (res.data) {
+          this.setTokens(res.data.tokens);
+        }
+      }),
+      map((res) => res.data?.tokens ?? null),
+      catchError(() => {
+        this.clearTokens();
+        return of(null);
+      }),
+    );
+  }
+
+  fetchCurrentUser() {
+    return this.api.get<{ user: User }>('/auth/me').pipe(
+      tap((res) => {
+        if (res.data) {
+          this._user.set(res.data.user);
+        }
+      }),
+      map((res) => res.data?.user),
+    );
+  }
+
+  updateProfile(updates: Partial<User>) {
+    return this.api.patch<{ user: User }>('/users/me/update_profile/', updates).pipe(
+      tap((res) => {
+        if (res.data) {
+          this._user.set(res.data.user);
+        }
+      }),
+      map((res) => res.data?.user),
+    );
+  }
+
+  loginWithGoogle(credential: string) {
+    this._loading.set(true);
+    return this.api.post<{ user: User; tokens: AuthTokens }>('/auth/google', { credential }).pipe(
+      tap({
+        next: (res) => {
+          if (res.data) {
+            this._user.set(res.data.user);
+            this.setTokens(res.data.tokens);
+            this.setCachedUser(res.data.user);
+          }
+          this._loading.set(false);
+        },
+        error: () => this._loading.set(false),
+      }),
+      map((res) => res.data),
+    );
+  }
+
+  /** Initialize Google Identity Services once. */
+  private initGSI(callback: (credential: string) => void): void {
+    if (this._gsiInitialized) return;
+    this._gsiInitialized = true;
+    google.accounts.id.initialize({
+      client_id: environment.googleClientId,
+      callback: (response) => callback(response.credential),
+    });
+  }
+
+  /** Render a Google Sign-In button into the given host element. */
+  renderGoogleButton(hostEl: HTMLElement): void {
+    if (!environment.googleClientId || typeof google === 'undefined') return;
+    this.initGSI((credential) => {
+      this.loginWithGoogle(credential).subscribe({
+        next: () => this.router.navigate(['/']),
+        error: () => {},
+      });
+    });
+    google.accounts.id.renderButton(hostEl, {
+      type: 'standard',
+      theme: 'filled_black',
+      size: 'large',
+      shape: 'rectangular',
+      logo_alignment: 'left',
+      width: 300,
+    });
+  }
+
+  uploadAvatar(file: File) {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    return this.api.post<{ avatarUrl: string }>('/users/me/upload_avatar/', formData).pipe(
+      tap((res) => {
+        if (res.data && this._user()) {
+          const currentUser = this._user()!;
+          this._user.set({ 
+            ...currentUser, 
+            profile: { 
+              ...currentUser.profile, 
+              avatar: res.data.avatarUrl 
+            } 
+          });
+        }
+      }),
+      map((res) => res.data?.avatarUrl),
+    );
+  }
+
+  getToken(): string | null {
+    if (this.platformId && typeof window !== 'undefined') {
+      return localStorage.getItem(ACCESS_TOKEN_KEY);
+    }
+    return null;
+  }
+
+  private setTokens(tokens: AuthTokens): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
+      localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+    }
+  }
+
+  private clearTokens(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(CACHED_USER_KEY);
+    }
+  }
+
+  private getCachedUser(): User | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const cached = localStorage.getItem(CACHED_USER_KEY);
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private setCachedUser(user: User): void {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(CACHED_USER_KEY, JSON.stringify(user));
+      } catch {
+        console.warn('Failed to cache user in localStorage');
+      }
+    }
+  }
+}
