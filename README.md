@@ -36,16 +36,6 @@
 ![Angular](https://img.shields.io/badge/Angular-DD0031?style=flat&logo=angular&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-092E20?style=flat&logo=django&logoColor=white)
 
-## Notas de Estudio
-
-Cada proyecto incluye:
-- Código fuente comentado
-- Makefile/build scripts
-- Notas de implementación (cuando aplica)
-- Test cases
-
-⚠️ **Disclaimer**: Este repositorio es para referencia y aprendizaje. La copia literal de código viola el código de honor de 42. Úsalo como herramienta de estudio, no como atajo.
-
 ---
 
 **Perfil 42**: [@alcarden](https://profile.intra.42.fr/users/alcarden)  
