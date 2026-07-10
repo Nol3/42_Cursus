@@ -1,0 +1,36 @@
+# Environment variables
+.env
+
+# Secrets
+secrets/
+
+# Data directories
+~/data/
+
+# Docker volumes
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+*.pem
+*.key
+*.crt
+
+# Backup files
+*.bak
+*.backup
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
